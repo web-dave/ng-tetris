@@ -48,7 +48,7 @@ export class AppComponent implements AfterViewInit {
     this.commands = fromEvent(document, 'keydown').pipe();
     this.context = this.tetris.nativeElement.getContext('2d');
     this.context.scale(20, 20);
-    this.arena = this.service.createArena(12, 20);
+    this.arena = this.service.createArena(12, 12);
 
     this.draw();
     this.update.subscribe(() => {
