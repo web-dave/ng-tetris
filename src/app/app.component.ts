@@ -4,7 +4,8 @@ import {
   AfterViewChecked,
   AfterViewInit
 } from '@angular/core';
-import { interval, fromEvent, Observable, Subject } from 'rxjs';
+import { interval, fromEvent, Observable, Subject, merge, of } from 'rxjs';
+import { takeUntil, tap, delay } from 'rxjs/operators';
 import {
   PiecesService,
   IArena,
@@ -24,8 +25,10 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('tetris') tetris;
   context: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
-  update = interval(1000);
-  commands: Observable<Event>;
+  $update = interval(1000);
+  $commands: Observable<Event>;
+  $end = new Subject<number>();
+  $btnAction = new Subject<{ keyCode: number }>();
   arena: IArena = [];
   player: IPlayer = {
     pos: { x: 5, y: 5 },
@@ -41,45 +44,60 @@ export class AppComponent implements AfterViewInit {
     '#FF51BC',
     '#9F0096'
   ];
+  commands = {
+    left: 37,
+    right: 39,
+    space: 32,
+    down: 40,
+    start: 38
+  };
   constructor(private service: PiecesService) {}
 
-  initCanvas() {
-    this.canvas = this.tetris.nativeElement;
-    this.commands = fromEvent(document, 'keydown').pipe();
-    this.context = this.tetris.nativeElement.getContext('2d');
-    this.context.scale(20, 20);
+  initTetris() {
+    this.getPiece();
     this.arena = this.service.createArena(12, 12);
 
     this.draw();
-    this.update.subscribe(() => {
+    this.$update.pipe(takeUntil(this.$end)).subscribe(() => {
       this.player.pos.y++;
       this.draw();
     });
-    this.commands.subscribe((e: KeyboardEvent) => this.cmdAction(e.keyCode));
+    merge(this.$commands, this.$btnAction)
+      .pipe(
+        tap(data => console.log(data)),
+        takeUntil(this.$end)
+      )
+      .subscribe((e: KeyboardEvent) => this.cmdAction(e.keyCode));
+  }
+  btnAction(e: number) {
+    console.log(e);
+    if (e === 38) {
+      this.$end.next(0);
+      of(true)
+        .pipe(delay(1500))
+        .subscribe(() => this.initTetris());
+    } else {
+      this.$btnAction.next({ keyCode: e });
+    }
   }
   cmdAction(e: number) {
-    const left = 37;
-    const right = 39;
-    const space = 32;
-    const down = 40;
-    // tslint:disable-next-line:no-string-literal
     switch (e) {
-      case left:
+      case this.commands.left:
         this.player.pos.x--;
         if (this.collide(this.arena, this.player)) {
           this.player.pos.x++;
         }
         break;
-      case right:
+      case this.commands.right:
         this.player.pos.x++;
         if (this.collide(this.arena, this.player)) {
           this.player.pos.x--;
         }
         break;
-      case space:
+      case this.commands.space:
         this.playerRotate(1);
         break;
-      case down:
+      case this.commands.down:
         this.player.pos.y++;
         break;
     }
@@ -89,7 +107,14 @@ export class AppComponent implements AfterViewInit {
     player.matrix.forEach((row, y) => {
       row.forEach((value, x) => {
         if (value !== 0) {
+          if (player.pos.y === -1) {
+            player.pos.y = 0;
+          }
+          console.log(y, player.pos.y);
           arena[y + player.pos.y][x + player.pos.x] = value;
+          if (player.pos.y === 0) {
+            this.$end.next(0);
+          }
         }
       });
     });
@@ -178,7 +203,10 @@ export class AppComponent implements AfterViewInit {
     });
   }
   ngAfterViewInit(): void {
-    this.getPiece();
-    this.initCanvas();
+    this.canvas = this.tetris.nativeElement;
+    this.$commands = fromEvent(document, 'keydown').pipe();
+    this.context = this.tetris.nativeElement.getContext('2d');
+    this.context.scale(20, 20);
+    this.initTetris();
   }
 }
