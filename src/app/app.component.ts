@@ -143,7 +143,7 @@ export class AppComponent implements AfterViewInit {
     return false;
   }
   draw(): boolean {
-    this.context.fillStyle = '#000';
+    this.context.fillStyle = '#566425';
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     if (!this.player.matrix) {
       return false;

@@ -1,9 +1,36 @@
-<canvas #tetris id="tetris" width="240" height="400"></canvas>
-<div class="commands">
-  <span class="left" (click)="cmdAction(37)">⬅️</span>
-  <span class="rotate" (click)="cmdAction(32)">🔄</span>
-  <span class="right" (click)="cmdAction(39)">➡️</span>
-  <span class="down" (click)="cmdAction(40)">⬇️</span>
+<div class="gameboy">
+  <span class="headline">dot matrix with stereo sound</span>
+  <span class="battery">battery</span>
+  <div class="screen">
+    <div class="screen-reflect"></div>
+    <canvas #tetris id="tetris" width="250" height="250"></canvas>
+  </div>
+  <h2>Nintendo <i>GAME BOY</i> <sub>TM</sub> </h2>
+  <div class="buttons">
+    <div class="stick">
+      <button class="left" (click)="cmdAction(39)"></button>
+      <button class="right" (click)="cmdAction(37)"></button>
+      <button class="circle"></button>
+      <button class="top"></button>
+      <button class="bottom" (click)="cmdAction(40)"></button>
+    </div>
+    <div class="buttons-ab">
+      <button class="button-a" (click)="cmdAction(32)"></button>
+      <button class="button-b" (click)="cmdAction(32)"></button>
+    </div>
+    <div class="buttons-start-select">
+      <button class="button-start"></button>
+      <button class="button-select"></button>
+    </div>
+    <ul class="speacker">
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      </ul>
+  </div>
 </div>
 <hr />
 rows completed:
