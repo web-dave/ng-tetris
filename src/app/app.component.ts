@@ -1,11 +1,6 @@
-import {
-  Component,
-  ViewChild,
-  AfterViewChecked,
-  AfterViewInit
-} from '@angular/core';
+import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { interval, fromEvent, Observable, Subject, merge, of } from 'rxjs';
-import { takeUntil, tap, delay, filter } from 'rxjs/operators';
+import { takeUntil, delay, filter } from 'rxjs/operators';
 import {
   PiecesService,
   IArena,
@@ -66,22 +61,17 @@ export class AppComponent implements AfterViewInit {
     this.$update
       .pipe(
         takeUntil(this.$end),
-        filter(data => !this.pause)
+        filter(() => !this.pause)
       )
       .subscribe(() => {
         this.player.pos.y++;
         this.draw();
       });
     merge(this.$commands, this.$btnAction)
-      .pipe(
-        takeUntil(this.$end)
-        // filter(() => !this.pause),
-        // tap((data: KeyboardEvent) => console.log(data.keyCode))
-      )
+      .pipe(takeUntil(this.$end))
       .subscribe((e: KeyboardEvent) => this.cmdAction(e.keyCode));
   }
   btnAction(e: number) {
-    console.log(e);
     if (e === this.commands.start) {
       this.pause = !this.pause;
     } else {
@@ -89,7 +79,6 @@ export class AppComponent implements AfterViewInit {
     }
   }
   cmdAction(e: number) {
-    console.log(e);
     if (!this.pause) {
       switch (e) {
         case this.commands.right:
@@ -152,7 +141,6 @@ export class AppComponent implements AfterViewInit {
     );
     this.player.pos.y = 0;
     this.player.pos.x = 5;
-    // this.arena[0].length / 2 - this.player.matrix[0].length / 2;
   }
   playerRotate(dir: number) {
     const pos = this.player.pos.x;
