@@ -4,23 +4,38 @@
   <div class="screen">
     <div class="screen-reflect"></div>
     <canvas #tetris id="tetris" width="250" height="250"></canvas>
+    <div class="menu" *ngIf="pause">
+      <label
+        (click)="btnAction(commands.reset)"
+        [ngClass]="{ selected: itm === 'reset' }"
+        >Reset</label
+      >
+      <label
+        [ngClass]="{ selected: itm === 'resume' }"
+        (click)="btnAction(commands.start)"
+        >Resume</label
+      >
+    </div>
   </div>
   <h2>Nintendo <i>GAME BOY</i> <sub>TM</sub></h2>
   <div class="buttons">
     <div class="stick">
-      <button class="left" (click)="btnAction(39)"></button>
-      <button class="right" (click)="btnAction(37)"></button>
+      <button class="left" (click)="btnAction(commands.right)"></button>
+      <button class="right" (click)="btnAction(commands.left)"></button>
       <button class="circle"></button>
-      <button class="top"></button>
-      <button class="bottom" (click)="btnAction(40)"></button>
+      <button class="top" (click)="btnAction(commands.up)"></button>
+      <button class="bottom" (click)="btnAction(commands.down)"></button>
     </div>
     <div class="buttons-ab">
-      <button class="button-a" (click)="btnAction(32)"></button>
-      <button class="button-b" (click)="btnAction(32)"></button>
+      <button class="button-a" (click)="btnAction(commands.turn)"></button>
+      <button class="button-b" (click)="btnAction(commands.turn)"></button>
     </div>
     <div class="buttons-start-select">
-      <button class="button-start" (click)="btnAction(38)"></button>
-      <button class="button-select"></button>
+      <button class="button-start" (click)="btnAction(commands.start)"></button>
+      <button
+        class="button-select"
+        (click)="btnAction(commands.select)"
+      ></button>
     </div>
     <ul class="speacker">
       <li></li>

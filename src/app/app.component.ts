@@ -5,7 +5,7 @@ import {
   AfterViewInit
 } from '@angular/core';
 import { interval, fromEvent, Observable, Subject, merge, of } from 'rxjs';
-import { takeUntil, tap, delay } from 'rxjs/operators';
+import { takeUntil, tap, delay, filter } from 'rxjs/operators';
 import {
   PiecesService,
   IArena,
@@ -22,6 +22,7 @@ import {
 export class AppComponent implements AfterViewInit {
   title = 'ng-tetris';
   rowsCompleted = 0;
+  pause = false;
   @ViewChild('tetris') tetris;
   context: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
@@ -30,6 +31,7 @@ export class AppComponent implements AfterViewInit {
   $end = new Subject<number>();
   $btnAction = new Subject<{ keyCode: number }>();
   arena: IArena = [];
+  itm: 'reset' | 'resume' = 'resume';
   player: IPlayer = {
     pos: { x: 5, y: 5 },
     matrix: null
@@ -47,9 +49,12 @@ export class AppComponent implements AfterViewInit {
   commands = {
     left: 37,
     right: 39,
-    space: 32,
+    turn: 32,
     down: 40,
-    start: 38
+    up: 38,
+    start: 88,
+    select: 13,
+    reset: 82
   };
   constructor(private service: PiecesService) {}
 
@@ -58,48 +63,70 @@ export class AppComponent implements AfterViewInit {
     this.arena = this.service.createArena(12, 12);
 
     this.draw();
-    this.$update.pipe(takeUntil(this.$end)).subscribe(() => {
-      this.player.pos.y++;
-      this.draw();
-    });
+    this.$update
+      .pipe(
+        takeUntil(this.$end),
+        filter(data => !this.pause)
+      )
+      .subscribe(() => {
+        this.player.pos.y++;
+        this.draw();
+      });
     merge(this.$commands, this.$btnAction)
       .pipe(
-        tap(data => console.log(data)),
         takeUntil(this.$end)
+        // filter(() => !this.pause),
+        // tap((data: KeyboardEvent) => console.log(data.keyCode))
       )
       .subscribe((e: KeyboardEvent) => this.cmdAction(e.keyCode));
   }
   btnAction(e: number) {
     console.log(e);
-    if (e === 38) {
-      this.$end.next(0);
-      of(true)
-        .pipe(delay(1500))
-        .subscribe(() => this.initTetris());
+    if (e === this.commands.start) {
+      this.pause = !this.pause;
     } else {
       this.$btnAction.next({ keyCode: e });
     }
   }
   cmdAction(e: number) {
-    switch (e) {
-      case this.commands.left:
-        this.player.pos.x--;
-        if (this.collide(this.arena, this.player)) {
-          this.player.pos.x++;
-        }
-        break;
-      case this.commands.right:
-        this.player.pos.x++;
-        if (this.collide(this.arena, this.player)) {
+    console.log(e);
+    if (!this.pause) {
+      switch (e) {
+        case this.commands.right:
           this.player.pos.x--;
-        }
-        break;
-      case this.commands.space:
-        this.playerRotate(1);
-        break;
-      case this.commands.down:
-        this.player.pos.y++;
-        break;
+          if (this.collide(this.arena, this.player)) {
+            this.player.pos.x++;
+          }
+          break;
+        case this.commands.left:
+          this.player.pos.x++;
+          if (this.collide(this.arena, this.player)) {
+            this.player.pos.x--;
+          }
+          break;
+        case this.commands.turn:
+          this.playerRotate(1);
+          break;
+        case this.commands.down:
+          this.player.pos.y++;
+          break;
+      }
+    } else {
+      switch (e) {
+        case this.commands.select:
+          this.pause = false;
+          if (this.itm === 'reset') {
+            this.$end.next(0);
+            of(true)
+              .pipe(delay(1500))
+              .subscribe(() => this.initTetris());
+          }
+          break;
+        case this.commands.up:
+        case this.commands.down:
+          this.itm = this.itm === 'reset' ? 'resume' : 'reset';
+          break;
+      }
     }
     this.draw();
   }
@@ -110,7 +137,6 @@ export class AppComponent implements AfterViewInit {
           if (player.pos.y === -1) {
             player.pos.y = 0;
           }
-          console.log(y, player.pos.y);
           arena[y + player.pos.y][x + player.pos.x] = value;
           if (player.pos.y === 0) {
             this.$end.next(0);
